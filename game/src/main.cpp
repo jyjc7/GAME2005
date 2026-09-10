@@ -19,7 +19,7 @@ int main()
     {
         BeginDrawing();
             ClearBackground(WHITE);
-            DrawText("Joshua Chee", 10, 10, 20, LIGHTGRAY);
+            DrawText("Joshua Chee - 101640384!", 10, 10, 20, LIGHTGRAY);
 
 
             time += 1;

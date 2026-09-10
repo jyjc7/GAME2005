@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+*.vs
+
+.vs
+/bin
+/game/obj
+/raylib-5.5/obj
+
