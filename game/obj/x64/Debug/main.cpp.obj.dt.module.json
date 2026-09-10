@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "C:\\GBC_GAME\\Sem3\\2005 Physics\\GAME2005\\game\\obj\\x64\\Debug\\main.obj",
+            "outputs": [
+                "C:\\GBC_GAME\\Sem3\\2005 Physics\\GAME2005\\game\\obj\\x64\\Debug\\main.cpp.obj.dt.module.json",
+                "C:\\GBC_GAME\\Sem3\\2005 Physics\\GAME2005\\game\\obj\\x64\\Debug\\main.cpp.obj.dt.d.json"
+            ],
+            "requires": []
+        }
+    ]
+}
