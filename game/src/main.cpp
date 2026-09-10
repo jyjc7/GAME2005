@@ -10,6 +10,12 @@ See documentation here: https://www.raylib.com/, and examples here: https://www.
 
 const unsigned int TARGET_FPS = 50;
 float time = 0;
+float frequency = 1/2.0f;
+float amplitude = 90;
+float dt = 1;
+
+float X, Y;
+
 int main()
 {
     InitWindow(1200, 800, "Physics-1");
@@ -19,8 +25,13 @@ int main()
     {
         BeginDrawing();
             ClearBackground(WHITE);
-            DrawText("Joshua Chee - 101640384!", 10, 10, 20, LIGHTGRAY);
+            DrawText("Joshua Chee - 101640384!", 10, 690, 20, LIGHTGRAY);
 
+
+            Y = Y + (cos(time * frequency)) * frequency * amplitude * dt;
+            X = X + (-sin(time * frequency)) * frequency * amplitude * dt;
+
+			DrawCircle(X+600, Y+400, 50, RED);
 
             time += 1;
 
