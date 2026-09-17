@@ -8,35 +8,65 @@ See documentation here: https://www.raylib.com/, and examples here: https://www.
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
-const unsigned int TARGET_FPS = 50;
-float time = 0;
-float frequency = 1/2.0f;
-float amplitude = 90;
-float dt = 1;
+int screenWidth = 1200;
+int screenHeight = 800;
 
-float X, Y;
+const unsigned int TARGET_FPS = 50;
+const float FIXED_DELTA_TIME = 1.0f / (float)TARGET_FPS;
+
+struct PhysicsBody
+{
+    Vector2 position;
+    Vector2 velocity;
+};
+
+PhysicsBody bird = { Vector2{-1000, -1000}, Vector2{0, 0} };
+
+Vector2 launchPosition;
+float launchSpeed = 100.0f;
+float launchAngle = 0.0f;
+float launchPosAdjustmentSpeed = 50.0f;
+
 
 int main()
 {
-    InitWindow(1200, 800, "Physics-1");
+    InitWindow(screenWidth, screenHeight, "Physics-1");
     SetTargetFPS(TARGET_FPS);
+
 
     while (!WindowShouldClose())
     {
         BeginDrawing();
-            ClearBackground(WHITE);
-            DrawText("Joshua Chee - 101640384!", 10, 690, 20, LIGHTGRAY);
+			ClearBackground(Color{100,100,150,255});
 
+			// GUI
+			DrawRectangle(0, 0, 400, 600, Color{0, 0, 0, 50});
+            GuiSlider(Rectangle{ 5, 30, 100, 20 }, "LaunchSpeed", TextFormat("%.2f", launchSpeed), &launchSpeed, 0, 500);
+            GuiSlider(Rectangle{ 5, 60, 100, 20 }, "LaunchAngle", TextFormat("%.2f", launchAngle), &launchAngle, -90, 90);
 
-            Y = Y + (cos(time * frequency)) * frequency * amplitude * dt;
-            X = X + (-sin(time * frequency)) * frequency * amplitude * dt;
+            if (IsKeyDown(KEY_UP)) {
+                launchPosition.y -= launchPosAdjustmentSpeed * GetFrameTime();
+            }
+            if (IsKeyDown(KEY_DOWN)) {
+                launchPosition.y += launchPosAdjustmentSpeed * GetFrameTime();
+            }
 
-			DrawCircle(X+600, Y+400, 50, RED);
+			Vector2 velocityPreview = {cosf(launchAngle * DEG2RAD) * launchSpeed, sinf(launchAngle * DEG2RAD) * launchSpeed};
 
-            time += 1;
+            DrawCircleV(launchPosition, 10, BROWN);
+			DrawLineEx(launchPosition, launchPosition + velocityPreview, 2, RED);
+            
+			// Spawn Bird
+			if (IsKeyPressed(KEY_SPACE))
+			{
+                bird.position = launchPosition;
+				bird.velocity = velocityPreview;
+			}
+			
+            DrawCircleV(bird.position, 30, RED);
 
-            GuiSliderBar(Rectangle{ 60, 5, 1000, 10 }, "Time", TextFormat("%.2f", time), &time, 0, 240);
-
+            //Vector2 mouseDelta = launchPosition - GetMousePosition();
+            DrawLineV(launchPosition, launchPosition - GetMousePosition(), Color{0,0,0, 60});
 
         EndDrawing();
     }
