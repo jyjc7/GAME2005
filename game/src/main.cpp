@@ -22,7 +22,7 @@ struct PhysicsBody
 
 PhysicsBody bird = { Vector2{-1000, -1000}, Vector2{0, 0} };
 
-Vector2 launchPosition;
+Vector2 launchPosition = {100, 700};
 float launchSpeed = 100.0f;
 float launchAngle = 0.0f;
 float launchPosAdjustmentSpeed = 50.0f;
@@ -40,9 +40,9 @@ int main()
 			ClearBackground(Color{100,100,150,255});
 
 			// GUI
-			DrawRectangle(0, 0, 400, 600, Color{0, 0, 0, 50});
-            GuiSlider(Rectangle{ 5, 30, 100, 20 }, "LaunchSpeed", TextFormat("%.2f", launchSpeed), &launchSpeed, 0, 500);
-            GuiSlider(Rectangle{ 5, 60, 100, 20 }, "LaunchAngle", TextFormat("%.2f", launchAngle), &launchAngle, -90, 90);
+			DrawRectangle(0, 0, 400, 120, Color{0, 0, 0, 50});
+			GuiSlider(Rectangle{ 120, 30, 100, 20 }, "LaunchSpeed", TextFormat("%.2f", launchSpeed), &launchSpeed, 0, 500);
+            GuiSlider(Rectangle{ 120, 60, 100, 20 }, "LaunchAngle", TextFormat("%.2f", launchAngle), &launchAngle, 90, -90);
 
             if (IsKeyDown(KEY_UP)) {
                 launchPosition.y -= launchPosAdjustmentSpeed * GetFrameTime();
@@ -66,7 +66,7 @@ int main()
             DrawCircleV(bird.position, 30, RED);
 
             //Vector2 mouseDelta = launchPosition - GetMousePosition();
-            DrawLineV(launchPosition, launchPosition - GetMousePosition(), Color{0,0,0, 60});
+            DrawLineV(launchPosition, GetMousePosition(), Color{ 0,0,0, 60 });
 
         EndDrawing();
     }
