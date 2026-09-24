@@ -7,20 +7,71 @@ See documentation here: https://www.raylib.com/, and examples here: https://www.
 #include "raymath.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
+#include "vector"
 
 int screenWidth = 1200;
 int screenHeight = 800;
 
 const unsigned int TARGET_FPS = 50;
-const float FIXED_DELTA_TIME = 1.0f / (float)TARGET_FPS;
 
-struct PhysicsBody
+enum ShapeType
 {
-    Vector2 position;
-    Vector2 velocity;
+	CIRCLE,
+	RECTANGLE,
+	TRIANGLE
 };
 
-PhysicsBody bird = { Vector2{-1000, -1000}, Vector2{0, 0} };
+class PhysicsBody
+{
+public:
+    Vector2 position = Vector2{ 0, 0 };
+    Vector2 velocity = Vector2{ 0, 0 };
+	float mass = 1.0f;
+	float drag = 0.1f;
+	Color color = RED;
+	float radius = 10.0f;
+	ShapeType shapeType = CIRCLE;
+};
+
+class PhysicsSimulation
+{
+public:
+	std::vector<PhysicsBody> bodies; //container for all physics bodies in the simulation
+    const float FIXED_DELTA_TIME = 1.0f / (float)TARGET_FPS;
+    Vector2 gravity = { 0, 100 };
+
+	void Update()
+	{
+		for (PhysicsBody& body : bodies)
+		{
+			body.position += body.velocity * FIXED_DELTA_TIME;
+			body.velocity += gravity * body.mass * FIXED_DELTA_TIME;
+			body.velocity *= 1.0f - body.drag * FIXED_DELTA_TIME;
+		}
+	}
+	void Draw()
+	{
+		for (PhysicsBody& body : bodies)
+		{
+			switch (body.shapeType)
+			{
+			case CIRCLE:
+				DrawCircleV(body.position, body.radius, body.color);
+				break;
+			case RECTANGLE:
+				DrawRectangleV(body.position, Vector2{ body.radius * 2, body.radius * 2 }, body.color);
+				break;
+			case TRIANGLE:
+				// Draw triangle logic here
+				break;
+			}
+		}
+	}
+};
+
+//PhysicsBody bird;// = { Vector2{-1000, -1000}, Vector2{0, 0} };
+PhysicsSimulation sim;
+
 
 Vector2 launchPosition = {100, 700};
 float launchSpeed = 100.0f;
@@ -33,7 +84,6 @@ int main()
     InitWindow(screenWidth, screenHeight, "GAME2005 - Joshua Chee 101640384");
     SetTargetFPS(TARGET_FPS);
 
-
     while (!WindowShouldClose())
     {
         BeginDrawing();
@@ -43,7 +93,10 @@ int main()
 			DrawRectangle(0, 0, 400, 200, Color{0, 0, 0, 100});
 			GuiSlider(Rectangle{ 120, 30, 100, 20 }, "LaunchSpeed", TextFormat("%.2f", launchSpeed, Color{ 255,255,255,255 }), &launchSpeed, 0, 500);
             GuiSlider(Rectangle{ 120, 60, 100, 20 }, "LaunchAngle", TextFormat("%.2f", launchAngle, Color{ 255,255,255,255 }), &launchAngle, -90, 90);
-			GuiDrawText("Use Arrow Keys to Adjust Launch Position", Rectangle{ 50, 90, 400, 20 }, 0, Color{ 255,255,255,255 });
+			GuiSlider(Rectangle{ 120, 90, 100, 20 }, "Gravity", TextFormat("%.2f", sim.gravity.y, Color{ 255,255,255,255 }), &sim.gravity.y, -700, 700);
+			GuiSlider(Rectangle{ 120, 120, 100, 20 }, "Drag", TextFormat("%.2f", sim.bodies.empty() ? 0.0f : sim.bodies[0].drag, Color{ 255,255,255,255 }), sim.bodies.empty() ? nullptr : &sim.bodies[0].drag, 0, 1);
+			GuiSlider(Rectangle{ 120, 150, 100, 20 }, "Mass", TextFormat("%.2f", sim.bodies.empty() ? 0.0f : sim.bodies[0].mass, Color{ 255,255,255,255 }), sim.bodies.empty() ? nullptr : &sim.bodies[0].mass, 0.1f, 10);
+			GuiDrawText("Use Arrow Keys to Adjust Launch Position", Rectangle{ 50, 180, 400, 20 }, 0, Color{ 255,255,255,255 });
 
             if (IsKeyDown(KEY_UP)) {
                 launchPosition.y -= launchPosAdjustmentSpeed * GetFrameTime();
@@ -60,13 +113,18 @@ int main()
 			// Spawn Bird
 			if (IsKeyPressed(KEY_SPACE))
 			{
-                bird.position = launchPosition;
+				PhysicsBody bird;
+				bird.position = launchPosition;
 				bird.velocity = velocityPreview;
+				bird.color = RED;
+				bird.radius = 10.0f;
+				bird.shapeType = CIRCLE;
+				sim.bodies.push_back(bird);
 			}
-			
-            DrawCircleV(bird.position, 30, RED);
 
-            //Vector2 mouseDelta = launchPosition - GetMousePosition();
+			sim.Update();
+			sim.Draw();
+
             DrawLineV(launchPosition, GetMousePosition(), Color{ 0,0,0, 60 });
 
         EndDrawing();
