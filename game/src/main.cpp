@@ -30,7 +30,7 @@ float launchPosAdjustmentSpeed = 50.0f;
 
 int main()
 {
-    InitWindow(screenWidth, screenHeight, "Physics-1");
+    InitWindow(screenWidth, screenHeight, "GAME2005 - Joshua Chee 101640384");
     SetTargetFPS(TARGET_FPS);
 
 
