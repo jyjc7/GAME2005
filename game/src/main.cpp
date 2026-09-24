@@ -42,7 +42,7 @@ int main()
 			// GUI
 			DrawRectangle(0, 0, 400, 120, Color{0, 0, 0, 50});
 			GuiSlider(Rectangle{ 120, 30, 100, 20 }, "LaunchSpeed", TextFormat("%.2f", launchSpeed), &launchSpeed, 0, 500);
-            GuiSlider(Rectangle{ 120, 60, 100, 20 }, "LaunchAngle", TextFormat("%.2f", launchAngle), &launchAngle, 90, -90);
+            GuiSlider(Rectangle{ 120, 60, 100, 20 }, "LaunchAngle", TextFormat("%.2f", launchAngle), &launchAngle, -90, 90);
 
             if (IsKeyDown(KEY_UP)) {
                 launchPosition.y -= launchPosAdjustmentSpeed * GetFrameTime();
