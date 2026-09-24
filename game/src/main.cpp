@@ -40,9 +40,10 @@ int main()
 			ClearBackground(Color{100,100,150,255});
 
 			// GUI
-			DrawRectangle(0, 0, 400, 120, Color{0, 0, 0, 50});
-			GuiSlider(Rectangle{ 120, 30, 100, 20 }, "LaunchSpeed", TextFormat("%.2f", launchSpeed), &launchSpeed, 0, 500);
-            GuiSlider(Rectangle{ 120, 60, 100, 20 }, "LaunchAngle", TextFormat("%.2f", launchAngle), &launchAngle, -90, 90);
+			DrawRectangle(0, 0, 400, 200, Color{0, 0, 0, 100});
+			GuiSlider(Rectangle{ 120, 30, 100, 20 }, "LaunchSpeed", TextFormat("%.2f", launchSpeed, Color{ 255,255,255,255 }), &launchSpeed, 0, 500);
+            GuiSlider(Rectangle{ 120, 60, 100, 20 }, "LaunchAngle", TextFormat("%.2f", launchAngle, Color{ 255,255,255,255 }), &launchAngle, -90, 90);
+			GuiDrawText("Use Arrow Keys to Adjust Launch Position", Rectangle{ 50, 90, 400, 20 }, 0, Color{ 255,255,255,255 });
 
             if (IsKeyDown(KEY_UP)) {
                 launchPosition.y -= launchPosAdjustmentSpeed * GetFrameTime();
