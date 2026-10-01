@@ -92,11 +92,11 @@ int main()
 
 			// GUI
 			DrawRectangle(0, 0, 400, 200, Color{0, 0, 0, 100});
-			GuiSlider(Rectangle{ 120, 30, 100, 20 }, "LaunchSpeed", TextFormat("%.2f", launchSpeed, Color{ 255,255,255,255 }), &launchSpeed, 0, 750);
-            GuiSlider(Rectangle{ 120, 60, 100, 20 }, "LaunchAngle", TextFormat("%.2f", launchAngle, Color{ 255,255,255,255 }), &launchAngle, -90, 90);
-			GuiSlider(Rectangle{ 120, 90, 100, 20 }, "Gravity", TextFormat("%.2f", sim.gravity.y, Color{ 255,255,255,255 }), &sim.gravity.y, -700, 700);
-			GuiSlider(Rectangle{ 120, 120, 100, 20 }, "Drag", TextFormat("%.2f", drag, Color{ 255,255,255,255 }), &drag, 0, 1);
-			GuiSlider(Rectangle{ 120, 150, 100, 20 }, "Mass", TextFormat("%.2f", mass, Color{ 255,255,255,255 }), &mass, 0.1f, 10);
+			GuiSlider(Rectangle{ 120, 30, 100, 20 }, "LaunchSpeed", TextFormat("%.2f", launchSpeed), &launchSpeed, 0, 750);
+            GuiSlider(Rectangle{ 120, 60, 100, 20 }, "LaunchAngle", TextFormat("%.2f", launchAngle), &launchAngle, -90, 90);
+			GuiSlider(Rectangle{ 120, 90, 100, 20 }, "Gravity", TextFormat("%.2f", sim.gravity.y), &sim.gravity.y, -700, 700);
+			GuiSlider(Rectangle{ 120, 120, 100, 20 }, "Drag", TextFormat("%.2f", drag), &drag, 0, 1);
+			GuiSlider(Rectangle{ 120, 150, 100, 20 }, "Mass", TextFormat("%.2f", mass), &mass, 0.1f, 10);
 			GuiDrawText("Use Arrow Keys to Adjust Launch Position", Rectangle{ 50, 180, 400, 20 }, 0, Color{ 255,255,255,255 });
 
             if (IsKeyDown(KEY_UP)) {
@@ -109,7 +109,7 @@ int main()
 			Vector2 velocityPreview = {cosf(-1 * launchAngle * DEG2RAD) * launchSpeed, sinf(-1 * launchAngle * DEG2RAD) * launchSpeed};
 
             DrawCircleV(launchPosition, 10, BROWN);
-			DrawLineEx(launchPosition, launchPosition + velocityPreview, 2, RED);
+			DrawLineEx(launchPosition, launchPosition + (velocityPreview * 0.5f), 2, RED);
             
 			// Spawn Bird
 			if (IsKeyPressed(KEY_SPACE))
