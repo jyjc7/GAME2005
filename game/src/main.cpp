@@ -74,10 +74,11 @@ PhysicsSimulation sim;
 
 
 Vector2 launchPosition = {100, 700};
-float launchSpeed = 100.0f;
-float launchAngle = 0.0f;
-float launchPosAdjustmentSpeed = 50.0f;
-
+float launchSpeed = 400.0f;
+float launchAngle = 45.0f;
+float launchPosAdjustmentSpeed = 100.0f;
+float drag = 0.1f;
+float mass = 1.0f;
 
 int main()
 {
@@ -91,11 +92,11 @@ int main()
 
 			// GUI
 			DrawRectangle(0, 0, 400, 200, Color{0, 0, 0, 100});
-			GuiSlider(Rectangle{ 120, 30, 100, 20 }, "LaunchSpeed", TextFormat("%.2f", launchSpeed, Color{ 255,255,255,255 }), &launchSpeed, 0, 500);
+			GuiSlider(Rectangle{ 120, 30, 100, 20 }, "LaunchSpeed", TextFormat("%.2f", launchSpeed, Color{ 255,255,255,255 }), &launchSpeed, 0, 750);
             GuiSlider(Rectangle{ 120, 60, 100, 20 }, "LaunchAngle", TextFormat("%.2f", launchAngle, Color{ 255,255,255,255 }), &launchAngle, -90, 90);
 			GuiSlider(Rectangle{ 120, 90, 100, 20 }, "Gravity", TextFormat("%.2f", sim.gravity.y, Color{ 255,255,255,255 }), &sim.gravity.y, -700, 700);
-			GuiSlider(Rectangle{ 120, 120, 100, 20 }, "Drag", TextFormat("%.2f", sim.bodies.empty() ? 0.0f : sim.bodies[0].drag, Color{ 255,255,255,255 }), sim.bodies.empty() ? nullptr : &sim.bodies[0].drag, 0, 1);
-			GuiSlider(Rectangle{ 120, 150, 100, 20 }, "Mass", TextFormat("%.2f", sim.bodies.empty() ? 0.0f : sim.bodies[0].mass, Color{ 255,255,255,255 }), sim.bodies.empty() ? nullptr : &sim.bodies[0].mass, 0.1f, 10);
+			GuiSlider(Rectangle{ 120, 120, 100, 20 }, "Drag", TextFormat("%.2f", drag, Color{ 255,255,255,255 }), &drag, 0, 1);
+			GuiSlider(Rectangle{ 120, 150, 100, 20 }, "Mass", TextFormat("%.2f", mass, Color{ 255,255,255,255 }), &mass, 0.1f, 10);
 			GuiDrawText("Use Arrow Keys to Adjust Launch Position", Rectangle{ 50, 180, 400, 20 }, 0, Color{ 255,255,255,255 });
 
             if (IsKeyDown(KEY_UP)) {
@@ -105,7 +106,7 @@ int main()
                 launchPosition.y += launchPosAdjustmentSpeed * GetFrameTime();
             }
 
-			Vector2 velocityPreview = {cosf(launchAngle * DEG2RAD) * launchSpeed, sinf(launchAngle * DEG2RAD) * launchSpeed};
+			Vector2 velocityPreview = {cosf(-1 * launchAngle * DEG2RAD) * launchSpeed, sinf(-1 * launchAngle * DEG2RAD) * launchSpeed};
 
             DrawCircleV(launchPosition, 10, BROWN);
 			DrawLineEx(launchPosition, launchPosition + velocityPreview, 2, RED);
@@ -116,6 +117,8 @@ int main()
 				PhysicsBody bird;
 				bird.position = launchPosition;
 				bird.velocity = velocityPreview;
+				bird.mass = mass;
+				bird.drag = drag;
 				bird.color = RED;
 				bird.radius = 10.0f;
 				bird.shapeType = CIRCLE;
