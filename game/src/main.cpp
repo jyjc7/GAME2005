@@ -27,27 +27,73 @@ public:
     Vector2 position = Vector2{ 0, 0 };
     Vector2 velocity = Vector2{ 0, 0 };
 	float mass = 1.0f;
+	float gravityScale = 1.0f;
 	float drag = 0.1f;
-	Color color = RED;
+	Color color = YELLOW;
 	float radius = 10.0f;
 	ShapeType shapeType = CIRCLE;
+};
+
+static bool isOverlapping(PhysicsBody& a, PhysicsBody& b)
+{
+	Vector2 disp = a.position - b.position;
+	float distance = Vector2LengthSqr(disp);
+	return distance < (a.radius + b.radius) * (a.radius + b.radius);
+}
+
+struct Bounds2D
+{
+	Bounds2D()
+	{
+		min = { 0, 0 };
+		max = { 0, 0 };
+	}
+	Bounds2D(float top, float bot, float left, float right)
+	{
+		min = { left, top };
+		max = { right, bot };
+	}
+
+	Vector2 min;
+	Vector2 max;
+	
+	bool Contains(Vector2 point) {
+		return (point.x >= min.x && point.x <= max.x && point.y >= min.y && point.y <= max.y);
+	}
 };
 
 class PhysicsSimulation
 {
 public:
-	std::vector<PhysicsBody> bodies; //container for all physics bodies in the simulation
+	Bounds2D bounds;
     const float FIXED_DELTA_TIME = 1.0f / (float)TARGET_FPS;
     Vector2 gravity = { 0, 100 };
+
+	void CheckCollisions() {
+		for (int i = 0; i < bodies.size(); i++) {
+			bodies[i].color = GREEN;
+		}
+		for (int i = 0; i < bodies.size(); i++) {
+			for (int j = i + 1; j < bodies.size(); j++) {
+				if (isOverlapping(bodies[i], bodies[j])) {
+					bodies[i].color = RED;
+					bodies[j].color = RED;
+				}
+			}
+		}
+	}
 
 	void Update()
 	{
 		for (PhysicsBody& body : bodies)
 		{
 			body.position += body.velocity * FIXED_DELTA_TIME;
-			body.velocity += gravity * body.mass * FIXED_DELTA_TIME;
+			body.velocity += gravity *  body.gravityScale * body.mass * FIXED_DELTA_TIME;
 			body.velocity *= 1.0f - body.drag * FIXED_DELTA_TIME;
 		}
+		
+		// Check for collisions between bodies
+		CheckCollisions();
 	}
 	void Draw()
 	{
@@ -67,11 +113,33 @@ public:
 			}
 		}
 	}
+
+	void AddBody(PhysicsBody& body)
+	{
+		bodies.push_back(body);
+	}
+
+	void ClearOutOfBoundsBodies()
+	{
+		for (auto it = bodies.begin(); it != bodies.end(); )
+		{
+			if (!bounds.Contains(it->position))
+			{
+				it = bodies.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+	}
+
+private:
+	std::vector<PhysicsBody> bodies; //container for all physics bodies in the simulation
 };
 
-//PhysicsBody bird;// = { Vector2{-1000, -1000}, Vector2{0, 0} };
 PhysicsSimulation sim;
-
+float margin = 50;
 
 Vector2 launchPosition = {100, 700};
 float launchSpeed = 400.0f;
@@ -79,11 +147,20 @@ float launchAngle = 45.0f;
 float launchPosAdjustmentSpeed = 100.0f;
 float drag = 0.1f;
 float mass = 1.0f;
+float spawnRadius = 10.0f;
 
 int main()
 {
     InitWindow(screenWidth, screenHeight, "GAME2005 - Joshua Chee 101640384");
     SetTargetFPS(TARGET_FPS);
+	
+	sim.bounds = Bounds2D((float)(screenHeight + margin), margin, (float)(screenWidth + margin), margin);
+
+	PhysicsBody target;
+	target.position = { 900, (float)(screenHeight - 100) };
+	target.radius = 50.0f;
+	target.gravityScale = 0.0f; // Target is static, no gravity
+	sim.AddBody(target);
 
     while (!WindowShouldClose())
     {
@@ -97,6 +174,8 @@ int main()
 			GuiSlider(Rectangle{ 120, 90, 100, 20 }, "Gravity", TextFormat("%.2f", sim.gravity.y), &sim.gravity.y, -700, 700);
 			GuiSlider(Rectangle{ 120, 120, 100, 20 }, "Drag", TextFormat("%.2f", drag), &drag, 0, 1);
 			GuiSlider(Rectangle{ 120, 150, 100, 20 }, "Mass", TextFormat("%.2f", mass), &mass, 0.1f, 10);
+			GuiSlider(Rectangle{ 120, 180, 100, 20 }, "Spawn Radius", TextFormat("%.2f", spawnRadius), &spawnRadius, 0, 50);
+		
 			GuiDrawText("Use Arrow Keys to Adjust Launch Position", Rectangle{ 50, 180, 400, 20 }, 0, Color{ 255,255,255,255 });
 
             if (IsKeyDown(KEY_UP)) {
@@ -119,10 +198,10 @@ int main()
 				bird.velocity = velocityPreview;
 				bird.mass = mass;
 				bird.drag = drag;
-				bird.color = RED;
-				bird.radius = 10.0f;
+				bird.color = YELLOW;
+				bird.radius = spawnRadius;
 				bird.shapeType = CIRCLE;
-				sim.bodies.push_back(bird);
+				sim.AddBody(bird);
 			}
 
 			sim.Update();
