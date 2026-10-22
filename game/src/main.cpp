@@ -14,11 +14,43 @@ int screenHeight = 800;
 
 const unsigned int TARGET_FPS = 50;
 
-enum ShapeType
+enum ColliderShape
 {
 	CIRCLE,
-	RECTANGLE,
-	TRIANGLE
+	HALFPLANE
+};
+
+class Collider
+{
+public:
+	virtual ColliderShape GetShape() = 0;
+};
+
+class Circle : public Collider
+{
+public:
+	float radius;
+
+	ColliderShape GetShape() override
+	{
+		return CIRCLE;
+	}
+
+	void Draw() override
+	{
+		DrawCircleV(body.position, body.radius, body.color);
+	}
+};
+
+class Halfplane : public Collider
+{
+public:
+	Vector2 normal;
+
+	ColliderShape GetShape() override
+	{
+		return HALFPLANE;
+	}
 };
 
 class PhysicsBody
@@ -31,8 +63,27 @@ public:
 	float drag = 0.1f;
 	Color color = YELLOW;
 	float radius = 10.0f;
-	ShapeType shapeType = CIRCLE;
+	Collider* collider = nullptr;
 };
+
+
+
+static bool isOverlappingCIRCLECIRCLE(PhysicsBody& a, PhysicsBody& b)
+{
+	Vector2 disp = a.position - b.position;
+	float distance = Vector2LengthSqr(disp);
+
+	float radA = ((Circle*)a.collider)->radius;
+	float radB = ((Circle*)b.collider)->radius;
+
+	return distance < (radA + radB) * (radA + radB);
+}
+
+// TODO
+static bool isOverlappingCIRCLEHALFPLANE(PhysicsBody& c, PhysicsBody& hp)
+{
+	return false;
+}
 
 static bool isOverlapping(PhysicsBody& a, PhysicsBody& b)
 {
@@ -74,10 +125,27 @@ public:
 			bodies[i].color = GREEN;
 		}
 		for (int i = 0; i < bodies.size(); i++) {
-			for (int j = i + 1; j < bodies.size(); j++) {
-				if (isOverlapping(bodies[i], bodies[j])) {
-					bodies[i].color = RED;
-					bodies[j].color = RED;
+			for (int j = i + 1; j < bodies.size(); j++)
+			{
+				PhysicsBody* bodyA = &bodies[i];
+				PhysicsBody* bodyB = &bodies[j];
+
+				bool isOverlapping = false;
+
+				// Circle circle collision detection
+				if (bodyA->collider->GetShape() == CIRCLE && bodyB->collider->GetShape() == CIRCLE) {
+					isOverlapping = isOverlappingCIRCLECIRCLE(*bodyA, *bodyB);
+				}
+				else if (bodyA->collider->GetShape() == CIRCLE && bodyB->collider->GetShape() == HALFPLANE) {
+					isOverlapping = isOverlappingCIRCLEHALFPLANE(*bodyA, *bodyB);
+				}
+				else if (bodyA->collider->GetShape() == HALFPLANE && bodyB->collider->GetShape() == CIRCLE) {
+					isOverlapping = isOverlappingCIRCLEHALFPLANE(*bodyB, *bodyA);
+				}
+
+				if (isOverlapping) {
+					bodyA->color = RED;
+					bodyB->color = RED;
 				}
 			}
 		}
@@ -99,18 +167,7 @@ public:
 	{
 		for (PhysicsBody& body : bodies)
 		{
-			switch (body.shapeType)
-			{
-			case CIRCLE:
-				DrawCircleV(body.position, body.radius, body.color);
-				break;
-			case RECTANGLE:
-				DrawRectangleV(body.position, Vector2{ body.radius * 2, body.radius * 2 }, body.color);
-				break;
-			case TRIANGLE:
-				// Draw triangle logic here
-				break;
-			}
+			body.Draw();
 		}
 	}
 
