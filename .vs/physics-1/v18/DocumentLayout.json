@@ -14,11 +14,15 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{c6f34f0d-7ae5-4f3a-be61-fe0c21ae9eb8}"
             },
             {
               "$type": "Bookmark",
@@ -32,7 +36,7 @@
               "RelativeDocumentMoniker": "game\\src\\main.cpp",
               "ToolTip": "C:\\GBC_GAME\\Sem3\\2005 Physics\\GAME2005\\game\\src\\main.cpp",
               "RelativeToolTip": "game\\src\\main.cpp",
-              "ViewState": "AgIAAC0AAAAAAAAAAAAAAKoAAAADAAAAAAAAAA==",
+              "ViewState": "AgIAAIAAAAAAAAAAAADgvwUBAAAYAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2026-09-17T16:30:09.431Z",
               "EditorCaption": ""

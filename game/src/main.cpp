@@ -24,33 +24,7 @@ class Collider
 {
 public:
 	virtual ColliderShape GetShape() = 0;
-};
-
-class Circle : public Collider
-{
-public:
-	float radius;
-
-	ColliderShape GetShape() override
-	{
-		return CIRCLE;
-	}
-
-	void Draw() override
-	{
-		DrawCircleV(body.position, body.radius, body.color);
-	}
-};
-
-class Halfplane : public Collider
-{
-public:
-	Vector2 normal;
-
-	ColliderShape GetShape() override
-	{
-		return HALFPLANE;
-	}
+	
 };
 
 class PhysicsBody
@@ -64,6 +38,35 @@ public:
 	Color color = YELLOW;
 	float radius = 10.0f;
 	Collider* collider = nullptr;
+
+	virtual void Draw() = 0;
+};
+
+class Circle : public Collider, public PhysicsBody
+{
+public:
+	float radius;
+
+	ColliderShape GetShape() override
+	{
+		return CIRCLE;
+	}
+
+	void Draw() override
+	{
+		DrawCircleV(position, radius, color);
+	}
+};
+
+class Halfplane : public Collider
+{
+public:
+	Vector2 normal;
+
+	ColliderShape GetShape() override
+	{
+		return HALFPLANE;
+	}
 };
 
 
@@ -127,8 +130,8 @@ public:
 		for (int i = 0; i < bodies.size(); i++) {
 			for (int j = i + 1; j < bodies.size(); j++)
 			{
-				PhysicsBody* bodyA = &bodies[i];
-				PhysicsBody* bodyB = &bodies[j];
+				PhysicsBody* bodyA = bodies[i];
+				PhysicsBody* bodyB = bodies[j];
 
 				bool isOverlapping = false;
 
@@ -153,11 +156,11 @@ public:
 
 	void Update()
 	{
-		for (PhysicsBody& body : bodies)
+		for (PhysicsBody* body : bodies)
 		{
-			body.position += body.velocity * FIXED_DELTA_TIME;
-			body.velocity += gravity *  body.gravityScale * body.mass * FIXED_DELTA_TIME;
-			body.velocity *= 1.0f - body.drag * FIXED_DELTA_TIME;
+			body->position += body->velocity * FIXED_DELTA_TIME;
+			body->velocity += gravity *  body->gravityScale * body->mass * FIXED_DELTA_TIME;
+			body->velocity *= 1.0f - body->drag * FIXED_DELTA_TIME;
 		}
 		
 		// Check for collisions between bodies
@@ -165,13 +168,13 @@ public:
 	}
 	void Draw()
 	{
-		for (PhysicsBody& body : bodies)
+		for (PhysicsBody* body : bodies)
 		{
-			body.Draw();
+			body->Draw();
 		}
 	}
 
-	void AddBody(PhysicsBody& body)
+	void AddBody(PhysicsBody* body)
 	{
 		bodies.push_back(body);
 	}
@@ -180,7 +183,7 @@ public:
 	{
 		for (auto it = bodies.begin(); it != bodies.end(); )
 		{
-			if (!bounds.Contains(it->position))
+			if (!bounds.Contains((*it)->position))
 			{
 				it = bodies.erase(it);
 			}
@@ -214,11 +217,11 @@ int main()
 	
 	sim.bounds = Bounds2D((float)(screenHeight + margin), margin, (float)(screenWidth + margin), margin);
 
-	PhysicsBody target;
+	Circle target;
 	target.position = { 900, (float)(screenHeight - 100) };
 	target.radius = 50.0f;
 	target.gravityScale = 0.0f; // Target is static, no gravity
-	sim.AddBody(target);
+	sim.AddBody(&target);
 
     while (!WindowShouldClose())
     {
@@ -251,15 +254,14 @@ int main()
 			// Spawn Bird
 			if (IsKeyPressed(KEY_SPACE))
 			{
-				PhysicsBody bird;
+				Circle bird;
 				bird.position = launchPosition;
 				bird.velocity = velocityPreview;
 				bird.mass = mass;
 				bird.drag = drag;
 				bird.color = YELLOW;
 				bird.radius = spawnRadius;
-				bird.shapeType = CIRCLE;
-				sim.AddBody(bird);
+				sim.AddBody(&bird);
 			}
 
 			sim.Update();
