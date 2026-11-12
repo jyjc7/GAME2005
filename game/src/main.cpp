@@ -32,12 +32,11 @@ class PhysicsBody
 public:
     Vector2 position = Vector2{ 0, 0 };
     Vector2 velocity = Vector2{ 0, 0 };
-	float mass = 1.0f;
-	float gravityScale = 1.0f;
-	float drag = 0.1f;
+	float mass = 0.0f;
+	float gravityScale = 0.0f;
+	float drag = 0.0f;
 	Color color = YELLOW;
-	float radius = 10.0f;
-	Collider* collider = nullptr;
+	float radius = 0.0f;
 
 	virtual void Draw() = 0;
 };
@@ -45,8 +44,6 @@ public:
 class Circle : public Collider, public PhysicsBody
 {
 public:
-	float radius;
-
 	ColliderShape GetShape() override
 	{
 		return CIRCLE;
@@ -58,7 +55,7 @@ public:
 	}
 };
 
-class Halfplane : public Collider
+class Halfplane : public Collider, public PhysicsBody
 {
 public:
 	Vector2 normal;
@@ -67,32 +64,42 @@ public:
 	{
 		return HALFPLANE;
 	}
+
+	void Draw() override
+	{
+		DrawLineV(position, position + normal * 100.0f, MAGENTA); // Draw the normal vector
+
+		Vector2 perp = { -normal.y, normal.x };
+		DrawLineV(position - perp * 10000.0f, position + perp * 10000.0f, color);
+	}
 };
 
 
 
-static bool isOverlappingCIRCLECIRCLE(PhysicsBody& a, PhysicsBody& b)
+static bool isOverlappingCIRCLECIRCLE(Circle* a, Circle* b)
 {
-	Vector2 disp = a.position - b.position;
+	Vector2 disp = a->position - b->position;
 	float distance = Vector2LengthSqr(disp);
 
-	float radA = ((Circle*)a.collider)->radius;
-	float radB = ((Circle*)b.collider)->radius;
+	float radA = a->radius;
+	float radB = b->radius;
 
 	return distance < (radA + radB) * (radA + radB);
 }
 
 // TODO
-static bool isOverlappingCIRCLEHALFPLANE(PhysicsBody& c, PhysicsBody& hp)
+static bool isOverlappingCIRCLEHALFPLANE(Circle* c, Halfplane* hp)
 {
-	return false;
+	Vector2 disp = c->position - hp->position;
+	float distance = Vector2DotProduct(disp, hp->normal);
+	return distance < c->radius;
 }
 
-static bool isOverlapping(PhysicsBody& a, PhysicsBody& b)
+static bool isOverlapping(PhysicsBody* a, PhysicsBody* b)
 {
-	Vector2 disp = a.position - b.position;
+	Vector2 disp = a->position - b->position;
 	float distance = Vector2LengthSqr(disp);
-	return distance < (a.radius + b.radius) * (a.radius + b.radius);
+	return distance < (a->radius + b->radius) * (a->radius + b->radius);
 }
 
 struct Bounds2D
@@ -125,25 +132,30 @@ public:
 
 	void CheckCollisions() {
 		for (int i = 0; i < bodies.size(); i++) {
-			(*bodies[i]).color = GREEN;
+			bodies[i]->color = GREEN;
 		}
 		for (int i = 0; i < bodies.size(); i++) {
 			for (int j = i + 1; j < bodies.size(); j++)
 			{
 				PhysicsBody* bodyA = bodies[i];
 				PhysicsBody* bodyB = bodies[j];
-
+				
 				bool isOverlapping = false;
 
+				Circle* aCircle = dynamic_cast<Circle*>(bodyA);
+				Circle* bCircle = dynamic_cast<Circle*>(bodyB);
+				Halfplane* aHalfplane = dynamic_cast<Halfplane*>(bodyA);
+				Halfplane* bHalfplane = dynamic_cast<Halfplane*>(bodyB);
+
 				// Circle circle collision detection
-				if (bodyA->collider->GetShape() == CIRCLE && bodyB->collider->GetShape() == CIRCLE) {
-					isOverlapping = isOverlappingCIRCLECIRCLE(*bodyA, *bodyB);
+				if (aCircle && bCircle) {
+					isOverlapping = isOverlappingCIRCLECIRCLE(aCircle, bCircle);
 				}
-				else if (bodyA->collider->GetShape() == CIRCLE && bodyB->collider->GetShape() == HALFPLANE) {
-					isOverlapping = isOverlappingCIRCLEHALFPLANE(*bodyA, *bodyB);
+				else if (aCircle && bHalfplane) {
+					isOverlapping = isOverlappingCIRCLEHALFPLANE(aCircle, bHalfplane);
 				}
-				else if (bodyA->collider->GetShape() == HALFPLANE && bodyB->collider->GetShape() == CIRCLE) {
-					isOverlapping = isOverlappingCIRCLEHALFPLANE(*bodyB, *bodyA);
+				else if (aHalfplane && bCircle) {
+					isOverlapping = isOverlappingCIRCLEHALFPLANE(bCircle, aHalfplane);
 				}
 
 				if (isOverlapping) {
@@ -159,7 +171,7 @@ public:
 		for (PhysicsBody* body : bodies)
 		{
 			body->position += body->velocity * FIXED_DELTA_TIME;
-			body->velocity += gravity *  body->gravityScale * body->mass * FIXED_DELTA_TIME;
+			body->velocity += gravity * body->gravityScale * body->mass * FIXED_DELTA_TIME;
 			body->velocity *= 1.0f - body->drag * FIXED_DELTA_TIME;
 		}
 		
@@ -196,7 +208,6 @@ public:
 
 private:
 	std::vector<PhysicsBody*> bodies; //container for all physics bodies in the simulation
-
 };
 
 PhysicsSimulation sim;
@@ -208,6 +219,7 @@ float launchAngle = 45.0f;
 float launchPosAdjustmentSpeed = 100.0f;
 float drag = 0.1f;
 float mass = 1.0f;
+float gravityScale = 1.0f;
 float spawnRadius = 10.0f;
 
 int main()
@@ -222,6 +234,11 @@ int main()
 	target.radius = 50.0f;
 	target.gravityScale = 0.0f; // Target is static, no gravity
 	sim.AddBody(&target);
+
+	Halfplane wall;
+	wall.position = { 1000, 400 };
+	wall.normal = { -1, 0 };
+	sim.AddBody(&wall);
 
     while (!WindowShouldClose())
     {
@@ -246,7 +263,7 @@ int main()
                 launchPosition.y += launchPosAdjustmentSpeed * GetFrameTime();
             }
 
-			Vector2 velocityPreview = {cosf(-1 * launchAngle * DEG2RAD) * launchSpeed, sinf(-1 * launchAngle * DEG2RAD) * launchSpeed};
+			Vector2 velocityPreview = { cosf(-1 * launchAngle * DEG2RAD) * launchSpeed, sinf(-1 * launchAngle * DEG2RAD) * launchSpeed };
 
             DrawCircleV(launchPosition, 10, BROWN);
 			DrawLineEx(launchPosition, launchPosition + (velocityPreview * 0.5f), 2, RED);
@@ -258,10 +275,13 @@ int main()
 				bird.position = launchPosition;
 				bird.velocity = velocityPreview;
 				bird.mass = mass;
+				bird.gravityScale = gravityScale;
 				bird.drag = drag;
 				bird.color = YELLOW;
 				bird.radius = spawnRadius;
-				sim.AddBody(&bird);
+
+				Circle* birdPtr = new Circle(bird);
+				sim.AddBody(birdPtr);
 			}
 
 			sim.Update();
