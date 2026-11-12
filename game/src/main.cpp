@@ -122,7 +122,7 @@ public:
 
 	void CheckCollisions() {
 		for (int i = 0; i < bodies.size(); i++) {
-			bodies[i].color = GREEN;
+			(*bodies[i]).color = GREEN;
 		}
 		for (int i = 0; i < bodies.size(); i++) {
 			for (int j = i + 1; j < bodies.size(); j++)
@@ -192,7 +192,8 @@ public:
 	}
 
 private:
-	std::vector<PhysicsBody> bodies; //container for all physics bodies in the simulation
+	std::vector<PhysicsBody*> bodies; //container for all physics bodies in the simulation
+
 };
 
 PhysicsSimulation sim;
