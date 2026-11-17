@@ -23,7 +23,6 @@ enum ColliderShape
 class Collider
 {
 public:
-	virtual ColliderShape GetShape() = 0;
 	
 };
 
@@ -37,8 +36,11 @@ public:
 	float drag = 0.0f;
 	Color color = YELLOW;
 	float radius = 0.0f;
+	bool isMovable = true;
 
 	virtual void Draw() = 0;
+	virtual ColliderShape GetShape() = 0;
+
 };
 
 class Circle : public Collider, public PhysicsBody
@@ -94,12 +96,92 @@ static bool isOverlappingCIRCLEHALFPLANE(Circle* c, Halfplane* hp)
 	float distance = Vector2DotProduct(disp, hp->normal);
 	return distance < c->radius;
 }
-
-static bool isOverlapping(PhysicsBody* a, PhysicsBody* b)
+static void solveCircleCircle(Circle* a, Circle* b)
 {
 	Vector2 disp = a->position - b->position;
-	float distance = Vector2LengthSqr(disp);
-	return distance < (a->radius + b->radius) * (a->radius + b->radius);
+	float dist = Vector2Length(disp);
+	Vector2 norm = Vector2Normalize(disp);
+	float radsum = a->radius + b->radius;
+	float seperation = radsum - dist;
+
+	Vector2 collCorrection = norm * seperation;
+
+	// Set pos to instance of collision
+	if (a->isMovable && b->isMovable) {
+		a->position -= collCorrection * 0.5;
+		b->position += collCorrection * 0.5;
+	}
+	else if (a->isMovable) {
+		a->position -= collCorrection;
+	}
+	else if (b->isMovable) {
+		b->position += collCorrection;
+	}
+
+	// TODO: Solve forces
+	Vector2 aVelNorm = Vector2Normalize(a->velocity);
+	Vector2 bVelNorm = Vector2Normalize(b->velocity);
+
+	a->velocity *= Vector2DotProduct(aVelNorm, norm);
+	b->velocity *= Vector2DotProduct(bVelNorm, norm);
+
+
+}
+
+bool ResolveCollisionCircleCircle(Circle* a, Circle* b)
+{
+	Vector2 disp = b->position - a->position;
+	float dist = Vector2Length(disp);
+
+	float radA = a->radius;
+	float radB = b->radius;
+
+	float sumRadius = radA + radB;
+
+	float overlap = sumRadius - dist;
+
+	if (overlap > 0)
+	{
+		if (a->isMovable && b->isMovable)
+		{
+			Vector2 mtv = disp / dist * overlap;
+			b->position += mtv * 0.5f;
+			a->position -= mtv * 0.5f;
+		}
+		else if (a->isMovable)
+		{
+			Vector2 mtv = disp / dist * overlap;
+			a->position -= mtv;
+		}
+		else if (b->isMovable)
+		{
+			Vector2 mtv = disp / dist * overlap;
+			b->position += mtv;
+		}
+		Vector2 aVelNorm = Vector2Normalize(a->velocity);
+		Vector2 bVelNorm = Vector2Normalize(b->velocity);
+		a->velocity *= Vector2DotProduct(aVelNorm, Vector2Normalize(disp));
+		b->velocity *= Vector2DotProduct(bVelNorm, Vector2Normalize(disp));
+	}
+
+	return overlap > 0;
+}
+
+bool ResolveCollisionCircleHalfPlane(Circle* c, Halfplane* hp)
+{
+	Vector2 displacement = c->position - hp->position;
+	float distance = Vector2DotProduct(displacement, hp->normal);
+	float overlap = c->radius - distance;
+
+	if (overlap >= 0)
+	{
+		Vector2 mtv = hp->normal * overlap;
+		c->position += mtv;
+	}
+	Vector2 cVelNorm = Vector2Normalize(c->velocity);
+	c->velocity *= Vector2DotProduct(cVelNorm, hp->normal);
+
+	return overlap >= 0;
 }
 
 struct Bounds2D
@@ -142,23 +224,28 @@ public:
 				
 				bool isOverlapping = false;
 
+
+
 				Circle* aCircle = dynamic_cast<Circle*>(bodyA);
 				Circle* bCircle = dynamic_cast<Circle*>(bodyB);
 				Halfplane* aHalfplane = dynamic_cast<Halfplane*>(bodyA);
 				Halfplane* bHalfplane = dynamic_cast<Halfplane*>(bodyB);
 
-				// Circle circle collision detection
-				if (aCircle && bCircle) {
-					isOverlapping = isOverlappingCIRCLECIRCLE(aCircle, bCircle);
+				if (bodyA->GetShape() == CIRCLE && bodyB->GetShape() == CIRCLE)
+				{
+					isOverlapping = ResolveCollisionCircleCircle((Circle*)bodyA, (Circle*)bodyB);
 				}
-				else if (aCircle && bHalfplane) {
-					isOverlapping = isOverlappingCIRCLEHALFPLANE(aCircle, bHalfplane);
+				else if (bodyA->GetShape() == CIRCLE && bodyB->GetShape() == HALFPLANE)
+				{
+					isOverlapping = ResolveCollisionCircleHalfPlane((Circle*)bodyA, (Halfplane*)bodyB);
 				}
-				else if (aHalfplane && bCircle) {
-					isOverlapping = isOverlappingCIRCLEHALFPLANE(bCircle, aHalfplane);
+				else if (bodyA->GetShape() == HALFPLANE && bodyB->GetShape() == CIRCLE)
+				{
+					isOverlapping = ResolveCollisionCircleHalfPlane((Circle*)bodyB, (Halfplane*)bodyA);
 				}
 
 				if (isOverlapping) {
+					//solveCircleCircle(aCircle, bCircle);
 					bodyA->color = RED;
 					bodyB->color = RED;
 				}
@@ -233,11 +320,13 @@ int main()
 	target.position = { 900, (float)(screenHeight - 100) };
 	target.radius = 50.0f;
 	target.gravityScale = 0.0f; // Target is static, no gravity
+	target.isMovable = false;
 	sim.AddBody(&target);
 
 	Halfplane wall;
 	wall.position = { 1000, 400 };
 	wall.normal = { -1, 0 };
+	wall.isMovable = false;
 	sim.AddBody(&wall);
 
     while (!WindowShouldClose())
