@@ -132,7 +132,7 @@ bool ResolveCollisionCircleCircle(Circle* a, Circle* b)
 {
 	Vector2 disp = b->position - a->position;
 	float dist = Vector2Length(disp);
-
+	Vector2 norm = Vector2Normalize(disp);
 	float radA = a->radius;
 	float radB = b->radius;
 
@@ -158,10 +158,11 @@ bool ResolveCollisionCircleCircle(Circle* a, Circle* b)
 			Vector2 mtv = disp / dist * overlap;
 			b->position += mtv;
 		}
+
 		Vector2 aVelNorm = Vector2Normalize(a->velocity);
 		Vector2 bVelNorm = Vector2Normalize(b->velocity);
-		a->velocity *= Vector2DotProduct(aVelNorm, Vector2Normalize(disp));
-		b->velocity *= Vector2DotProduct(bVelNorm, Vector2Normalize(disp));
+		a->velocity *= Vector2DotProduct(aVelNorm, norm);
+		b->velocity *= Vector2DotProduct(bVelNorm, norm);
 	}
 
 	return overlap > 0;
@@ -178,8 +179,8 @@ bool ResolveCollisionCircleHalfPlane(Circle* c, Halfplane* hp)
 		Vector2 mtv = hp->normal * overlap;
 		c->position += mtv;
 	}
-	Vector2 cVelNorm = Vector2Normalize(c->velocity);
-	c->velocity *= Vector2DotProduct(cVelNorm, hp->normal);
+	//Vector2 cVelNorm = Vector2Normalize(c->velocity);
+	//c->velocity *= Vector2DotProduct(cVelNorm, hp->normal);
 
 	return overlap >= 0;
 }
@@ -224,13 +225,6 @@ public:
 				
 				bool isOverlapping = false;
 
-
-
-				Circle* aCircle = dynamic_cast<Circle*>(bodyA);
-				Circle* bCircle = dynamic_cast<Circle*>(bodyB);
-				Halfplane* aHalfplane = dynamic_cast<Halfplane*>(bodyA);
-				Halfplane* bHalfplane = dynamic_cast<Halfplane*>(bodyB);
-
 				if (bodyA->GetShape() == CIRCLE && bodyB->GetShape() == CIRCLE)
 				{
 					isOverlapping = ResolveCollisionCircleCircle((Circle*)bodyA, (Circle*)bodyB);
@@ -245,7 +239,6 @@ public:
 				}
 
 				if (isOverlapping) {
-					//solveCircleCircle(aCircle, bCircle);
 					bodyA->color = RED;
 					bodyB->color = RED;
 				}
@@ -298,7 +291,7 @@ private:
 };
 
 PhysicsSimulation sim;
-float margin = 50;
+float margin = 10;
 
 Vector2 launchPosition = {100, 700};
 float launchSpeed = 400.0f;
@@ -368,8 +361,9 @@ int main()
 				bird.drag = drag;
 				bird.color = YELLOW;
 				bird.radius = spawnRadius;
+				bird.isMovable = true;
 
-				Circle* birdPtr = new Circle(bird);
+				Circle* birdPtr = new Circle(bird); // Create a new Circle object on the heap
 				sim.AddBody(birdPtr);
 			}
 
